@@ -135,13 +135,13 @@ Write-Host ""
 Write-Host "Wrote $envPath" -ForegroundColor Green
 
 if ($SkipInstall) {
-  Write-Host "Skipping install (-SkipInstall). Run pip/npm yourself per SETUP.md" -ForegroundColor Yellow
+  Write-Host "Skipping install (-SkipInstall). Install Python deps with 'pip install -e `"./dev`"' and dashboard deps with 'npm install' in app\dashboard." -ForegroundColor Yellow
   exit 0
 }
 
 $run = Read-Host "Install Python venv + deps + spaCy model + npm (dashboard)? [Y/n]"
 if ($run -match '^[nN]') {
-  Write-Host "Done. Next: follow SETUP.md or run: powershell -ExecutionPolicy Bypass -File .\scripts\start-teacher.ps1" -ForegroundColor Cyan
+  Write-Host "Done. Next: see README.md for configuration, or run: powershell -ExecutionPolicy Bypass -File .\scripts\start-teacher.ps1" -ForegroundColor Cyan
   exit 0
 }
 

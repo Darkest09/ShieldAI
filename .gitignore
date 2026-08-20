@@ -14,3 +14,22 @@ app/dashboard/dist/
 data/
 ShieldAI_github_backup/
 github-export-archive/
+# Coursework artefacts and local scratch (never commit)
+Ojash_Amatya_230421(proposal).docx
+SHARE_FIRST.txt
+.annotated-project-text.txt
+build_exploit_report.py
+output/
+tmp/
+.claude/
+.commandcode/
+.agents/
+.codex/
+.docx-review/
+mobile_forensics_work/
+scripts/build_thesis.py
+scripts/build_thesis_20k.py
+scripts/make_thesis_visuals.py
+scripts/ethics_evaluation.py
+scripts/export-github-backup.ps1
+scripts/make-share-bundle.ps1

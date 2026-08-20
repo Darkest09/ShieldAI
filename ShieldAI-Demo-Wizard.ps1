@@ -113,7 +113,7 @@ $steps = @(
      Say = "39 automated tests, all passing. And this document maps every single feature in my proposal to the exact code that implements it.";
      Acts = @(
        @{L="Run tests";A={Run-Tests}},
-       @{L="Open traceability doc";A={Open-File "PROPOSAL_TRACEABILITY.md"}}
+       @{L="Open project README";A={Open-File "README.md"}}
      ) },
   @{ Title = "8. Close";
      Do  = "Deliver the closing line, then offer to answer questions. When finished, click Stop servers.";
