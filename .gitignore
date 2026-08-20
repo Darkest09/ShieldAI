@@ -1,0 +1,16 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+*.egg-info/
+.venv/
+venv/
+dist/
+.env
+.env.*
+!.env.example
+**/node_modules/
+app/dashboard/dist/
+data/
+ShieldAI_github_backup/
+github-export-archive/

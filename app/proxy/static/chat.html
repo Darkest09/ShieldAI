@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>ShieldAI · Chat</title>
+  <style>
+    :root {
+      --bg: #0c0c0f;
+      --surface: #16161d;
+      --surface2: #1e1e28;
+      --border: #2a2a36;
+      --text: #f4f4f5;
+      --muted: #a1a1aa;
+      --accent: #6366f1;
+      --accent-dim: #4f46e5;
+      --user-bubble: #312e81;
+      --bot-bubble: #1e1e28;
+      --danger: #f87171;
+      --radius: 14px;
+      --font: "Segoe UI", system-ui, -apple-system, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; font-family: var(--font); background: var(--bg); color: var(--text); }
+    .app {
+      max-width: 52rem; margin: 0 auto; height: 100%; min-height: 100dvh;
+      display: flex; flex-direction: column; padding: 0.75rem 1rem 1rem;
+    }
+    header {
+      flex-shrink: 0; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border);
+      display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem 1rem;
+    }
+    .brand { display: flex; flex-direction: column; gap: 0.15rem; }
+    .brand strong { font-size: 1.05rem; letter-spacing: -0.02em; }
+    .brand span { font-size: 0.72rem; color: var(--muted); max-width: 28rem; line-height: 1.35; }
+    .brand a { color: var(--accent); text-decoration: none; }
+    .brand a:hover { text-decoration: underline; }
+    .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin-left: auto; }
+    .toolbar label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+    .toolbar input {
+      width: 11rem; max-width: 40vw; background: var(--surface2); border: 1px solid var(--border);
+      color: var(--text); border-radius: 8px; padding: 0.35rem 0.5rem; font-size: 0.8rem;
+    }
+    .toolbar button, .composer button {
+      background: var(--surface2); border: 1px solid var(--border); color: var(--text);
+      border-radius: 8px; padding: 0.4rem 0.75rem; font-size: 0.8rem; cursor: pointer;
+    }
+    .toolbar button:hover, .composer button:hover:not(:disabled) { background: var(--border); }
+    .toolbar button.primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent-dim));
+      border-color: transparent; color: #fff; font-weight: 600;
+    }
+    .toolbar button.primary:hover:not(:disabled) { filter: brightness(1.08); }
+    #thread {
+      flex: 1; overflow-y: auto; margin: 0.75rem 0; padding: 0.25rem 0;
+      display: flex; flex-direction: column; gap: 0.65rem; min-height: 4rem;
+    }
+    .row { display: flex; flex-direction: column; gap: 0.2rem; max-width: 92%; animation: fade 0.25s ease; }
+    @keyframes fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+    .row.user { align-self: flex-end; align-items: flex-end; }
+    .row.assistant { align-self: flex-start; align-items: flex-start; }
+    .meta { font-size: 0.65rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+    .bubble {
+      padding: 0.65rem 0.85rem; border-radius: var(--radius); line-height: 1.45; font-size: 0.9rem;
+      white-space: pre-wrap; word-break: break-word;
+    }
+    .row.user .bubble { background: var(--user-bubble); border: 1px solid rgba(99,102,241,0.35); }
+    .row.assistant .bubble { background: var(--bot-bubble); border: 1px solid var(--border); }
+    .row.error .bubble { border-color: var(--danger); color: var(--danger); background: rgba(248,113,113,0.08); }
+    .composer {
+      flex-shrink: 0; display: flex; gap: 0.5rem; align-items: flex-end;
+      padding-top: 0.5rem; border-top: 1px solid var(--border);
+    }
+    .composer textarea {
+      flex: 1; min-height: 2.75rem; max-height: 8rem; resize: none;
+      background: var(--surface); border: 1px solid var(--border); color: var(--text);
+      border-radius: var(--radius); padding: 0.65rem 0.85rem; font-size: 0.9rem; font-family: inherit;
+    }
+    .composer textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px rgba(99,102,241,0.25); }
+    .composer button.primary { padding: 0.65rem 1.1rem; border-radius: var(--radius); }
+    .composer button:disabled { opacity: 0.45; cursor: not-allowed; }
+    .status { font-size: 0.7rem; color: var(--muted); min-height: 1rem; margin-top: 0.35rem; }
+    .typing { display: flex; gap: 4px; padding: 0.5rem 0; }
+    .typing span {
+      width: 6px; height: 6px; border-radius: 50%; background: var(--muted); animation: bounce 1.2s infinite ease-in-out;
+    }
+    .typing span:nth-child(2) { animation-delay: 0.15s; }
+    .typing span:nth-child(3) { animation-delay: 0.3s; }
+    @keyframes bounce { 0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; } 40% { transform: scale(1); opacity: 1; } }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="brand">
+        <strong>ShieldAI</strong>
+        <span>Messages go through <code style="color:#a5b4fc">POST /v1/chat/completions</code> — PII is scrubbed before your LLM provider. <a href="/docs">API docs</a></span>
+      </div>
+      <div class="toolbar">
+        <div>
+          <label for="model">Model</label><br />
+          <input id="model" type="text" value="{{DEFAULT_MODEL}}" autocomplete="off" spellcheck="false" />
+        </div>
+        <div style="align-self:flex-end;display:flex;gap:0.35rem">
+          <button type="button" id="clear" title="Clear conversation">Clear</button>
+          <button type="button" class="primary" id="send">Send</button>
+        </div>
+      </div>
+    </header>
+    <div id="thread" aria-live="polite"></div>
+    <div class="status" id="status"></div>
+    <div class="composer">
+      <textarea id="prompt" rows="2" placeholder="Write a message… (Enter to send, Shift+Enter for newline)" aria-label="Message"></textarea>
+      <button type="button" class="primary" id="send2">Send</button>
+    </div>
+  </div>
+  <script>
+(function () {
+  const thread = document.getElementById('thread');
+  const status = document.getElementById('status');
+  const modelEl = document.getElementById('model');
+  const promptEl = document.getElementById('prompt');
+  const messages = [];
+
+  function bubble(role, text, isError) {
+    const row = document.createElement('div');
+    row.className = 'row ' + (isError ? 'error' : role);
+    const meta = document.createElement('div');
+    meta.className = 'meta';
+    meta.textContent = role === 'user' ? 'You' : (isError ? 'Error' : 'Assistant');
+    const b = document.createElement('div');
+    b.className = 'bubble';
+    b.textContent = text;
+    row.appendChild(meta);
+    row.appendChild(b);
+    thread.appendChild(row);
+    thread.scrollTop = thread.scrollHeight;
+  }
+
+  function typing() {
+    const row = document.createElement('div');
+    row.className = 'row assistant';
+    row.id = 'typing-row';
+    const t = document.createElement('div');
+    t.className = 'typing';
+    for (let i = 0; i < 3; i++) { const s = document.createElement('span'); t.appendChild(s); }
+    row.appendChild(t);
+    thread.appendChild(row);
+    thread.scrollTop = thread.scrollHeight;
+  }
+  function removeTyping() {
+    const el = document.getElementById('typing-row');
+    if (el) el.remove();
+  }
+
+  async function send() {
+    const model = modelEl.value.trim();
+    const content = promptEl.value.trim();
+    status.textContent = '';
+    if (!model || !content) {
+      status.textContent = 'Model and message are required.';
+      return;
+    }
+    promptEl.value = '';
+    messages.push({ role: 'user', content });
+    bubble('user', content, false);
+
+    const busy = [document.getElementById('send'), document.getElementById('send2')];
+    busy.forEach((b) => { b.disabled = true; });
+    typing();
+    status.textContent = 'Calling ShieldAI…';
+
+    try {
+      const res = await fetch('/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model, messages: messages.slice() }),
+      });
+      const data = await res.json().catch(() => ({}));
+      removeTyping();
+      if (!res.ok) {
+        const detail = typeof data.detail === 'string' ? data.detail : JSON.stringify(data.detail ?? data, null, 2);
+        bubble('assistant', detail, true);
+        messages.pop();
+        status.textContent = 'HTTP ' + res.status;
+        return;
+      }
+      const text = data.choices?.[0]?.message?.content ?? JSON.stringify(data, null, 2);
+      messages.push({ role: 'assistant', content: text });
+      bubble('assistant', text, false);
+      status.textContent = 'OK · ' + (data.id || 'done');
+    } catch (e) {
+      removeTyping();
+      bubble('assistant', String(e), true);
+      messages.pop();
+      status.textContent = 'Network error';
+    } finally {
+      busy.forEach((b) => { b.disabled = false; });
+      promptEl.focus();
+    }
+  }
+
+  document.getElementById('send').addEventListener('click', send);
+  document.getElementById('send2').addEventListener('click', send);
+  document.getElementById('clear').addEventListener('click', () => {
+    messages.length = 0;
+    thread.innerHTML = '';
+    status.textContent = 'Conversation cleared.';
+  });
+  promptEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      send();
+    }
+  });
+
+  try {
+    const saved = localStorage.getItem('shieldai_model');
+    if (saved) modelEl.value = saved;
+    modelEl.addEventListener('change', () =>
+      localStorage.setItem('shieldai_model', modelEl.value)
+    );
+  } catch (_) {}
+  promptEl.focus();
+})();
+  </script>
+</body>
+</html>

@@ -1,0 +1,26 @@
+services:
+  shieldai:
+    build: .
+    ports:
+      - "8888:8888"
+    env_file:
+      - .env
+    environment:
+      DEMO_CHAT_ENABLED: "true"
+    volumes:
+      - shieldai_data:/app/data
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8888/health', timeout=3).read()",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 120s
+
+volumes:
+  shieldai_data:
